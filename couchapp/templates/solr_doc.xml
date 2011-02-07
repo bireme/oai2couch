@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<add>
+    <doc>
+        <field name="id">{{id}}</field>
+        {{#creators}}
+            <field name="creator">{{name}}</field>
+        {{/creators}}        
+        {{#titles}}
+            <field name="title">{{title}}</field>
+        {{/titles}}
+        <field name="type">{{type}}</field>
+    </doc>
+</add>
+
