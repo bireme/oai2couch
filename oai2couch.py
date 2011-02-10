@@ -36,34 +36,41 @@ def remove_empty_keys(dictionary):
     return no_empty_dict
 
 
-def save_in_couch(provider_name):
+def save_in_couch(provider):
+    provider_name, provider_url = provider
+    
+    client = Client(provider_url, registry)    
     count = 0
-    for record in client.listRecords(metadataPrefix='oai_dc'):
+    try:
+        for record in client.listRecords(metadataPrefix='oai_dc'):
         
-        header, metadata, about = record
-        
-        if metadata:
-            # getMap return dictonary with all metadata fields
-            doc = metadata.getMap()
-            # 
-            doc['_id'] = re.sub('[:/.]','-',header.identifier())
-            doc['datestamp'] = str(header.datestamp())
-            doc['provider'] = provider_name
+            header, metadata, about = record
             
-            # only save documents that have identifier metadata
-            if doc['identifier']:
-                doc = remove_empty_keys(doc)
-                db.save_doc(doc)
-                count = count +1
-        
-        if count >= settings.MAX_DOCS_TO_HARVEST:
-            break;
-        
+            if metadata:
+                # getMap return dictonary with all metadata fields
+                doc = metadata.getMap()
+                # 
+                doc['_id'] = re.sub('[:/.]','-',header.identifier())
+                doc['datestamp'] = str(header.datestamp())
+                doc['provider'] = provider_name
+
+                # only save documents that have identifier metadata
+                if doc['identifier']:
+                    doc = remove_empty_keys(doc)
+                    db.save_doc(doc)
+                    count = count +1
+
+            if count >= settings.MAX_DOCS_TO_HARVEST:
+                print('Harvest of ' + provider_name + ' Done.')
+                break;
+
+    except Exception, detail:
+        print('Harvest of ' + provider_name + ' FAIL ===>' + str(detail))
+
 
 #######################################################################################
 
-
-#allow execute a script for a specific provider defined in settings provider list
+# allow execute a script for a specific provider defined in settings provider list
 
 parser = OptionParser()
 parser.add_option("-n", type="int", dest="provider_num")
@@ -84,18 +91,11 @@ if options.provider_num != None:
     
     try:
         provider = settings.PROVIDERS[provider_num_index]
-        provider_name = provider[0]
-        provider_url = provider[1]
- 
-        client = Client(provider_url, registry)
-        save_in_couch(provider_name)
+        save_in_couch(provider)
+        
     except IndexError, e:
         print('Provider number not available in settings provider list')
     
 else:
     for provider in settings.PROVIDERS:
-        provider_name = provider[0]
-        provider_url = provider[1]
-    
-        client = Client(provider_url, registry)
-        save_in_couch(provider_name)
+        save_in_couch(provider)
