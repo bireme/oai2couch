@@ -1,4 +1,5 @@
 python-env
 settings.py
 *.pyc
+couchapp/.couchapprc
 
