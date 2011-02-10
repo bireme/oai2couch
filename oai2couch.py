@@ -5,11 +5,12 @@ import datetime
 import re
 import json 
 
-from settings import *
-
 from oaipmh.client import Client
 from oaipmh.metadata import MetadataRegistry, oai_dc_reader
 from couchdbkit import *
+from optparse import OptionParser
+
+import settings
 
 class Provider():
     def __init__(self, name, endpoint):
@@ -55,25 +56,46 @@ def save_in_couch(provider_name):
                 db.save_doc(doc)
                 count = count +1
         
-        if count >= MAX_DOCS_TO_HARVEST:
+        if count >= settings.MAX_DOCS_TO_HARVEST:
             break;
         
 
 #######################################################################################
 
+
+#allow execute a script for a specific provider defined in settings provider list
+
+parser = OptionParser()
+parser.add_option("-n", type="int", dest="provider_num")
+
+(options, args) = parser.parse_args()
+
 # server object 
-server = Server(COUCH_SERVER)
+server = Server(settings.COUCH_SERVER)
 
 # create or associate to couch database
-db = server.get_or_create_db(COUCH_DB)
+db = server.get_or_create_db(settings.COUCH_DB)
 
-for provider in PROVIDERS:
-    provider_name = provider[0]
-    provider_url = provider[1]
+registry = MetadataRegistry()
+registry.registerReader('oai_dc', oai_dc_reader)
 
-    registry = MetadataRegistry()
-    registry.registerReader('oai_dc', oai_dc_reader)
-    client = Client(provider_url, registry)
-
-    save_in_couch(provider_name)
+if options.provider_num != None:
+    provider_num_index = options.provider_num - 1 
     
+    try:
+        provider = settings.PROVIDERS[provider_num_index]
+        provider_name = provider[0]
+        provider_url = provider[1]
+ 
+        client = Client(provider_url, registry)
+        save_in_couch(provider_name)
+    except IndexError, e:
+        print('Provider number not available in settings provider list')
+    
+else:
+    for provider in settings.PROVIDERS:
+        provider_name = provider[0]
+        provider_url = provider[1]
+    
+        client = Client(provider_url, registry)
+        save_in_couch(provider_name)
