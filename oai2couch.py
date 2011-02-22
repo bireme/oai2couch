@@ -7,6 +7,8 @@ import json
 
 from oaipmh.client import Client
 from oaipmh.metadata import MetadataRegistry, oai_dc_reader
+from datetime import datetime
+
 from couchdbkit import *
 from optparse import OptionParser
 
@@ -39,10 +41,17 @@ def remove_empty_keys(dictionary):
 def save_in_couch(provider):
     provider_name, provider_url = provider
     
-    client = Client(provider_url, registry)    
+    if settings.START_FROM_DATE != '':
+        start_from = datetime.strptime(settings.START_FROM_DATE, "%Y-%m-%d")
+    else:
+        start_from = datetime.strptime("1900-01-01", "%Y-%m-%d")
+    
+    client = Client(provider_url, registry)  
+    client.updateGranularity()
+    
     count = 0
     try:
-        for record in client.listRecords(metadataPrefix='oai_dc'):
+        for record in client.listRecords(metadataPrefix='oai_dc', from_= start_from):
         
             header, metadata, about = record
             
@@ -57,7 +66,7 @@ def save_in_couch(provider):
                 # only save documents that have identifier metadata
                 if doc['identifier']:
                     doc = remove_empty_keys(doc)
-                    db.save_doc(doc)
+                    db.save_doc(doc, force_update=True)
                     count = count +1
 
             if count >= settings.MAX_DOCS_TO_HARVEST:

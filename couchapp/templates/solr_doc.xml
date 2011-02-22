@@ -1,14 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <add>
     <doc>
-        <field name="id">{{id}}</field>
-        {{#creators}}
-            <field name="creator">{{name}}</field>
-        {{/creators}}        
-        {{#titles}}
-            <field name="title">{{title}}</field>
-        {{/titles}}
-        <field name="type">{{type}}</field>
+        <field name="id">{{id}}</field>        
+        <field name="provider">{{provider}}</field>
+        <field name="datestamp">{{datestamp}}</field>
+        <field name="publisher">{{publisher}}</field>
+        
+        {{#creator_list}}
+            <field name="creator">{{content}}</field>
+        {{/creator_list}}
+
+        {{#contributor_list}}
+            <field name="contributor">{{content}}</field>
+        {{/contributor_list}}
+        
+        {{#title_list}}
+            <field name="title">{{content}}</field>
+        {{/title_list}}
+        
+        {{#description_list}}
+            <field name="description">{{content}}</field>
+        {{/description_list}}
+        
+        {{#language_list}}
+            <field name="language">{{content}}</field>
+        {{/language_list}}
+        
+        {{#type_list}}
+            <field name="type">{{content}}</field>
+        {{/type_list}}
+        
+        {{#format_list}}
+            <field name="format">{{content}}</field>
+        {{/format_list}}
+        
+        {{#identifier_list}}
+            <field name="identifier">{{content}}</field>
+        {{/identifier_list}}
+        
+        {{#subject_list}}
+            <field name="subject">{{content}}</field>
+        {{/subject_list}}
+
+        {{#date_list}}
+            <field name="date">{{content}}</field>
+        {{/date_list}}
+
     </doc>
 </add>
 

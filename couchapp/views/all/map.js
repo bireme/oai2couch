@@ -1,5 +1,5 @@
 function(doc) {
   if (doc.title) {
-    emit(null, doc);
+    emit(doc.id, null);
   }
 };

@@ -16,23 +16,22 @@ function(head, req) {
     }
 
     while(row = getRow()) {
-        var creators = [];
-        var titles = [];
-        var descriptions = [];
-        
-        for each (var value in row.value.creator)
-            creators.push({'name':value});
-        for each(var value in row.value.title)
-            titles.push({'title':value});            
-        for each(var value in row.value.description)
-            descriptions.push({'description':value});            
 
         rows.push({
-                    id: row.value._id,
-                    creators: creators,
-                    titles: titles,
-                    descriptions: descriptions,
-                    type: row.value.type,
+                    id: row.doc.id,                    
+                    provider: row.doc.provider,
+                    datestamp: row.doc.datestamp,
+                    publisher: row.doc.publisher,
+                    date_list: create_list(row.doc.date),
+                    format_list: create_list(row.doc.format),
+                    creator_list: create_list(row.doc.creator),
+                    contributor_list: create_list(row.doc.contributor),
+                    title_list: create_list(row.doc.title),
+                    description_list: create_list(row.doc.description),
+                    language_list: create_list(row.doc.language),
+                    identifier_list: create_list(row.doc.identifier),
+                    subject_list: create_list(row.doc.subject),
+                    type_list: create_list(row.doc.type),
                    });
     }
     
@@ -44,3 +43,12 @@ function(head, req) {
     var html = Mustache.to_html(ddoc.templates.solr_doc_list, view);
     return(html);               
 };
+
+function create_list(field){
+    value_list = []
+    
+    for each (var value in field)
+       value_list.push({'content':value});
+       
+    return value_list;
+}
