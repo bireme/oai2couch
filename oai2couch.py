@@ -5,11 +5,11 @@ import datetime
 import re
 import json 
 
-from oaipmh.client import Client
+from client import ClientOAI
 from oaipmh.metadata import MetadataRegistry, oai_dc_reader
 from datetime import datetime
 
-from couchdbkit import *
+from couchdbkit import Server
 from optparse import OptionParser
 
 import settings
@@ -18,7 +18,6 @@ class Provider():
     def __init__(self, name, endpoint):
         self.name = name
         self.endpoint = endpoint
-    
 
 def remove_empty_keys(dictionary):
 
@@ -37,50 +36,47 @@ def remove_empty_keys(dictionary):
 
     return no_empty_dict
 
-
 def save_in_couch(provider):
     provider_name, provider_url = provider
     
+    start_from = None
+    client = ClientOAI(provider_url, registry, debug=True)  
+    
     if settings.START_FROM_DATE != '':
         start_from = datetime.strptime(settings.START_FROM_DATE, "%Y-%m-%d")
-    else:
-        start_from = datetime.strptime("1900-01-01", "%Y-%m-%d")
+        client.updateGranularity()
     
-    client = Client(provider_url, registry)  
-    client.updateGranularity()
-    
-    count = 0
-    try:
-        for record in client.listRecords(metadataPrefix='oai_dc', from_= start_from):
+    count = 0    
+    for record in client.listRecords(metadataPrefix='oai_dc', from_=start_from):
         
-            header, metadata, about = record
-            
-            if metadata:
-                # getMap return dictonary with all metadata fields
-                doc = metadata.getMap()
-                # 
-                doc['_id'] = re.sub('[:/.]','-',header.identifier())
-                doc['datestamp'] = str(header.datestamp())
-                doc['provider'] = provider_name
+        header, metadata, about = record
+        
+        if metadata:
+            # getMap return dictonary with all metadata fields
+            doc = metadata.getMap()
 
-                # only save documents that have identifier metadata
-                if doc['identifier']:
+            doc['_id'] = re.sub('[:/.]','-',header.identifier())
+            doc['datestamp'] = str(header.datestamp())
+            doc['provider'] = provider_name
+
+            # only save documents that have identifier metadata
+            if doc['identifier']:
+                try:
                     doc = remove_empty_keys(doc)
                     db.save_doc(doc, force_update=True)
+            
+                    print('Document ' + doc['_id'] + ' saved in couch')
                     count = count +1
+                except Exception as detail:
+                    print "Save of document %s FAIL with exception: %s" % (doc['_id'], detail)
 
-            if count >= settings.MAX_DOCS_TO_HARVEST:
-                print('Harvest of ' + provider_name + ' Done.')
-                break;
-
-    except Exception, detail:
-        print('Harvest of ' + provider_name + ' FAIL ===>' + str(detail))
-
+        if count >= settings.MAX_DOCS_TO_HARVEST:
+            print('Harvest of ' + provider_name + ' Done.')
+            break;
 
 #######################################################################################
 
 # allow execute a script for a specific provider defined in settings provider list
-
 parser = OptionParser()
 parser.add_option("-n", type="int", dest="provider_num")
 
