@@ -1,5 +1,6 @@
 OAI2COUCH Script
 =================
+This repository has been archived. It is now read-only.
 
 Requirements 
 -------------
